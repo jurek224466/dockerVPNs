@@ -1,0 +1,53 @@
+version: "3.2"
+services:
+  wireguard:
+    image: ghcr.io/linuxserver/wireguard
+    container_name: wireguard
+    hostname: wireguard
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Warsaw
+      #- SERVERURL=172.31.42.144#optional
+      - SERVERPORT=51820 #optional
+      - PEERS=1 #optional
+      - PEERDNS=1.1.1.1 #optional
+      - INTERNAL_SUBNET=10.10.10.0 #optional
+    volumes:
+      - /home/ubuntu/wireguard-server/config:/config
+      - /lib/modules:/lib/modules
+    ports:
+      - 51820:51820/udp
+    sysctls:
+      - net.ipv4.conf.all.src_valid_mark=1
+    restart: always
+  openvpn-as:
+    image: ghcr.io/linuxserver/openvpn-as
+    container_name: openvpn
+    hostname: openvpn
+    cap_add:
+      - NET_ADMIN
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Warsaw
+      - INTERFACE=eth0 #optional
+    volumes:
+      - /home/ubuntu/openvpn-server/config
+    ports:
+      - 943:943
+      - 9443:9443
+      - 1194:1194/udp
+    restart: always
+    network_mode: bridge
+  vpn:
+    image: hwdsl2/ipsec-vpn-server
+    restart: always
+    ports:
+      - "500:500/udp"
+      - "4500:4500/udp"
+      - "1701:1701/udp"
+      - "1702:1702/udp"
